@@ -17,25 +17,42 @@ dir_faces = 'att_faces/orl_faces'
 #Tamaño para reducir a miniaturas las fotografias
 size = 4
 
-# Crear una lista de imagenes y una lista de nombres correspondientes
-(images, lables, names, id) = ([], [], {}, 0)
-for (subdirs, dirs, files) in os.walk(dir_faces):
+# Crear una lista de imágenes y una lista de nombres correspondientes
+(images, labels, names, id) = ([], [], {}, 0)
+(im_width, im_height) = (112, 92)  # Tamaño estándar para las imágenes
+
+# Directorio donde se encuentran las carpetas con las caras de entrenamiento
+dir_faces = 'att_faces/orl_faces'
+
+for subdir, dirs, files in os.walk(dir_faces):
     for subdir in dirs:
-        names[id] = subdir
         subjectpath = os.path.join(dir_faces, subdir)
+        names[id] = subdir  # Asignar el nombre del subdirectorio al id actual
+
         for filename in os.listdir(subjectpath):
-            path = subjectpath + '/' + filename
-            lable = id
-            images.append(cv2.imread(path, 0))
-            lables.append(int(lable))
-        id += 1
-(im_width, im_height) = (112, 92)
+            if filename.lower().endswith(('.png', '.jpg', '.jpeg')):  # Comprobar si el archivo es una imagen
+                path = os.path.join(subjectpath, filename)
+                img = cv2.imread(path, 0)  # Leer la imagen en escala de grises
+                if img is not None:
+                    img_resized = cv2.resize(img, (im_width, im_height))  # Redimensionar la imagen
+                    images.append(img_resized)
+                    labels.append(id)  # Usar el id actual como etiqueta
+
+        id += 1  # Incrementar el id para el siguiente subdirectorio
+
+# Imprimir el diccionario 'names' para depuración
+print("Diccionario de nombres:", names)
+
+
+print(f"Total de imágenes: {len(images)}")
+print(f"Total de etiquetas: {len(labels)}")
+print("Diccionario de nombres:", names)
 
 # Crear una matriz Numpy de las dos listas anteriores
-(images, lables) = [numpy.array(lis) for lis in [images, lables]]
+(images, labels) = [numpy.array(lis) for lis in [images, labels]]
 # OpenCV entrena un modelo a partir de las imagenes
 model = cv2.face.LBPHFaceRecognizer_create()
-model.train(images, lables)
+model.train(images, labels)
 
 
 # Parte 2: Utilizar el modelo entrenado en funcionamiento con la camara
